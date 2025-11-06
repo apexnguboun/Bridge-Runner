@@ -49,7 +49,7 @@ class Runner(Entity):
             model='assets/models/player/blue.obj',
             texture='textures/player/colormap.png',
             scale=2.25,
-            y=-0.2,   # ปรับระดับเท้า
+            y=1,   # ปรับระดับเท้า
             z=0.2,  # ✅ ชดเชยการเยื้องแกน Z
             color=color_main
         )
@@ -64,6 +64,10 @@ class Runner(Entity):
         self._stack = []
         self.safe_z = None
         self.finished = False
+
+                # ===== ตัวแปรแอนิเมชัน =====
+        self.walk_phase = 0
+        self.is_moving = False
 
     def on_ground(self):
         return raycast(self.world_position + Vec3(0,0.1,0), Vec3(0,-1,0),
@@ -82,6 +86,7 @@ class Runner(Entity):
     def physics_update(self, mv):
         if self.finished:
             return
+        self.is_moving = mv.length() > 0
         if mv.length() > 0:
             self.position += mv * self.speed * time.dt
             self.rotation_y = math.degrees(math.atan2(mv.x, mv.z))
@@ -90,8 +95,32 @@ class Runner(Entity):
         else:
             self.vel_y -= self.gravity * time.dt
         self.y += self.vel_y * time.dt
+        self.animate_visual_movement(self.is_moving)
         if GAP_START_Z-0.01 <= self.z <= GAP_END_Z+0.01:
             self.x = lerp(self.x, self.lane_x, min(1, time.dt*10))
+
+    def animate_visual_movement(self, moving: bool):
+        if not hasattr(self, 'visual'):
+            return
+
+        if moving:
+            self.walk_phase += time.dt * 8  # ความเร็วในการแกว่ง
+
+            # แกว่งตัวเบา ๆ (ซ้าย–ขวา)
+            self.visual.rotation_z = math.sin(self.walk_phase) * 3
+
+            # เด้งขึ้นลงเล็กน้อย
+            target_y = -0.5 + abs(math.sin(self.walk_phase * 0.5)) * 0.05
+            self.visual.y = lerp(self.visual.y, target_y, time.dt * 8)
+
+        else:
+            # กลับท่าปกติอย่างนุ่มนวล
+            self.visual.rotation_z = lerp(self.visual.rotation_z, 0, time.dt * 6)
+            self.visual.y = lerp(self.visual.y, -0.5, time.dt * 6)
+        
+        target_y = 1 + abs(math.sin(self.walk_phase * 0.5)) * 0.05
+        self.visual.y = lerp(self.visual.y, target_y, time.dt * 8)
+
 
     def _update_stack_visual(self):
         for e in self._stack: destroy(e)
