@@ -40,7 +40,7 @@ class Runner(Entity):
     def __init__(self, lane_x, color_main, **kwargs):
         super().__init__(model='cube',
                          origin_y=-0.5, collider='box',
-                         scale=(1,1,1), color=color.clear, **kwargs)
+                         scale=(1,2,1), color=color.clear, **kwargs)
         
         
         # ---- โมเดลจริงเป็นลูก (visual) ----
@@ -98,7 +98,7 @@ class Runner(Entity):
         self._stack.clear()
         for i in range(self.inventory):
             self._stack.append(
-                Entity(parent=self, texture='assets/brick.png',model='cube', color=self.color_main,
+                Entity(parent=self, model='cube', color=self.color_main,
                        scale=Vec3(1,0.30,1), position=Vec3(0,0.6+i*0.23,-0.5))
             )
 
@@ -179,7 +179,7 @@ class BridgeRaceLevel(Entity):
     def __init__(self):
         super().__init__()
         
-        self.start_island = Entity(model='cube', scale=(START_SIZE,1,START_SIZE),texture='assets/floor',
+        self.start_island = Entity(model='cube', scale=(START_SIZE,1,START_SIZE),
                                    color=color.white, collider='box', position=(0,0,0))
         self.goal_island = Entity(model='cube', scale=(GOAL_SIZE,1,GOAL_SIZE),
                                   color=color.green, collider='box', position=(0,0.5,GOAL_Z))
@@ -201,31 +201,22 @@ class BridgeRaceLevel(Entity):
         self.player_text = Text(text='You: 0', position=Vec2(-0.47,0.45))
         self.bot_text    = Text(text='Bot: 0',  position=Vec2(0.33,0.45))
         self.win_text = None
-        # ================== 🌤️ แสงและเงา ==================
-        # แสงอาทิตย์หลัก
-        sun = DirectionalLight()
-        sun.look_at(Vec3(1, -1, -0.5))      # ทิศทางแสงเฉียงลง
-        sun.color = color.rgb(255, 245, 220)
-        sun.shadows = True                   # ✅ เปิดการแสดงเงา
-        sun.shadow_map_resolution = (2048, 2048)
-        sun.shadow_bias = 0.0005
+        # แสงอาทิตย์หลัก (Directional Light)
+        sun = DirectionalLight(shadows=True)
+        sun.look_at(Vec3(1, -1, -0.6))
+        sun.color = color.rgb(255, 240, 220)   # โทนแสงอุ่นนุ่ม
 
-        # แสงรอบฉาก (ambient) ให้ส่วนมืดไม่ดำสนิท
+        # แสงกระจายรอบฉาก (Ambient Light)
         ambient = AmbientLight()
-        ambient.color = color.rgb(100, 100, 120)
-
-        # ถ้าตัวละครหรือพื้นไม่รับเงา ให้เปิดรับแสงแบบนี้ด้วย
-        for e in scene.entities:
-            if hasattr(e, 'model'):
-                e.model = e.model  # บังคับรีโหลด model เพื่ออัปเดตการรับเงา
-        
+        ambient.color = color.rgb(130, 130, 150)
+        # ท้องฟ้า
         sky = Sky()
 
     def spawn_block(self):
         col = random.choice([color.azure, color.red])
         x = random.randint(-int(START_SIZE/2)+1, int(START_SIZE/2)-1)
         z = random.randint(-int(START_SIZE/2)+1, int(START_SIZE/2)-1)
-        self.collectables.append(Entity(model='cube', texture='assets/brick.png',color=col, scale=(1,0.5,1), position=(x,BLOCK_Y,z), collider='box'))
+        self.collectables.append(Entity(model='cube', color=col, scale=(1,0.5,1), position=(x,BLOCK_Y,z), collider='box'))
         invoke(self.spawn_block, delay=SPAWN_INTERVAL)
 
     def try_pickup_blocks(self, r: Runner):
@@ -247,7 +238,7 @@ class BridgeRaceLevel(Entity):
                 pos = Vec3(r.lane_x, y, z)
                 exists = any(abs(e.position.x-pos.x)<0.05 and abs(e.position.z-pos.z)<0.05 for e in bridge_list)
                 if not exists:
-                    piece = Entity(model='cube',texture='assets/brick.png', color=r.color_main.tint(-.15),
+                    piece = Entity(model='cube', color=r.color_main.tint(-.15),
                                    scale=(1,0.3,1), position=pos, collider='box')
                     bridge_list.append(piece)
                     r.consume_block(1)
@@ -300,25 +291,14 @@ class BridgeRaceLevel(Entity):
 
 # ===================== คัทซีนเริ่มเกม =====================
 def start_cutscene():
-    bg = Entity( model='quad',
-                texture='assets/bg.png',  
-                scale=(22),                   
-                z=10,                               
-                color=color.white  )
     red_block = Entity(model='assets/models/player/red.obj',texture='textures/player/colormap.png',color=color.red, scale=(3.5), position=(-4,-1.5,2), rotation_y=-225)
     blue_block = Entity(model='assets/models/player/blue.obj',texture='textures/player/colormap.png', color=color.azure, scale=(3.5), position=(4,-1.5,2), rotation_y=225)
-    start_button = Button(model='quad',texture= 'assets/start' ,scale=(0.35), color=color.white, y=-0.1)
-    logo = Entity(model='quad',        
-                texture='assets/logo.png',
-                scale=(5),     
-                position=(0, 2.1)  )
-
+    start_button = Button(text='START', scale=(0.25,0.12), color=color.azure, y=0)
+    
     def start_game():
         destroy(red_block)
         destroy(blue_block)
         destroy(start_button)
-        destroy(logo)
-        destroy(bg)
         BridgeRaceLevel()
     start_button.on_click = start_game
 
