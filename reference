@@ -1,0 +1,14 @@
+Bridge Runner
+--------------------------------------
+A 3D bridge-building and running game made with the Ursina Engine.
+
+Author: Apex thaharn rab 
+Reference & Code Assistance: ChatGPT (OpenAI GPT-5)
+3D Models Source: Kenney.nl (https://kenney.nl/tools) ,(OpenAI GPT-5)
+Date: 2025
+--------------------------------------
+This project uses free 3D models and assets from Kenney.nl,
+and gameplay logic, animation, and lighting adjustments were guided
+and referenced from ChatGPT-generated examples.
+--------------------------------------
+"""
