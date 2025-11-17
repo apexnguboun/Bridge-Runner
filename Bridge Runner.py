@@ -46,8 +46,8 @@ class Runner(Entity):
         # ---- โมเดลจริงเป็นลูก (visual) ----
         self.visual = Entity(
             parent=self,
-            model='assets/models/player/blue.obj',
-            texture='textures/player/colormap.png',
+            model="assets/blue.obj",
+            texture ='assets/colormap.png',
             scale=2.25,
             y=1,   # ปรับระดับเท้า
             z=0.2,  # ✅ ชดเชยการเยื้องแกน Z
@@ -98,7 +98,7 @@ class Runner(Entity):
         self.animate_visual_movement(self.is_moving)
         if GAP_START_Z-0.01 <= self.z <= GAP_END_Z+0.01:
             self.x = lerp(self.x, self.lane_x, min(1, time.dt*10))
-
+#66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
     def animate_visual_movement(self, moving: bool):
         if not hasattr(self, 'visual'):
             return
@@ -120,14 +120,14 @@ class Runner(Entity):
         
         target_y = 1 + abs(math.sin(self.walk_phase * 0.5)) * 0.05
         self.visual.y = lerp(self.visual.y, target_y, time.dt * 8)
-
+#66666666666666666666666666666666666666666666666666666666666666666666666666666666666666666666
 
     def _update_stack_visual(self):
         for e in self._stack: destroy(e)
         self._stack.clear()
         for i in range(self.inventory):
             self._stack.append(
-                Entity(parent=self, texture='assets/brick.png',model='cube', color=self.color_main,
+                Entity(parent=self,model='cube',texture='assets/brick', color=self.color_main,
                        scale=Vec3(1,0.30,1), position=Vec3(0,0.6+i*0.23,-0.5))
             )
 
@@ -148,9 +148,9 @@ class Bot(Runner):
     def __init__(self, lane_x, color_main, **kwargs):
         super().__init__(lane_x=lane_x, color_main=color_main, **kwargs)
 
-        self.visual.model = 'assets/models/player/red.obj'
+        self.visual.model = 'assets/red.obj'
         self.visual.color = color_main
-        self.visual.z = 0.2  # ✅ ปรับ offset z ให้เท่ากับผู้เล่น
+        self.visual.z = 0.2  
         self.visual.y = -0.2
         self.speed = 8.5
 
@@ -161,6 +161,7 @@ class Bot(Runner):
             self.finished = True
             self.rotation_y = 0
             return Vec3(0,0,0)
+        
         if GAP_START_Z - 0.6 <= self.z <= GAP_END_Z + 0.4:
             self.x = lerp(self.x, self.lane_x, min(1, time.dt*20))
             self.rotation_y = 0
@@ -180,10 +181,11 @@ class Bot(Runner):
                 self.rotation_y = 180
                 return v.normalized()
             return Vec3(0,0,0)
+        
         if self.z <= GAP_START_Z - 0.25:
             mine = [b for b in level.collectables if b.color == self.color_main]
             if self.inventory < self.LOAD_TARGET and mine:
-                target = min(mine, key=lambda b: distance_2d(Vec2(self.x,self.z), Vec2(b.x,b.z)))
+                target = min(mine, key=lambda b: (Vec2(self.x,self.z), Vec2(b.x,b.z)))
                 v = target.position - self.position; v.y = 0
                 if v.length() > 0:
                     self.rotation_y = math.degrees(math.atan2(v.x, v.z))
@@ -208,11 +210,11 @@ class BridgeRaceLevel(Entity):
     def __init__(self):
         super().__init__()
         
-        self.start_island = Entity(model='cube', scale=(START_SIZE,1,START_SIZE),texture='assets/floor',
+        self.start_island = Entity(model='cube',texture='assets/floor',scale=(START_SIZE,1,START_SIZE),
                                    color=color.white, collider='box', position=(0,0,0))
         self.goal_island = Entity(model='cube', scale=(GOAL_SIZE,1,GOAL_SIZE),
                                   color=color.green, collider='box', position=(0,0.5,GOAL_Z))
-        Entity(model='assets/models/map/flag.obj', texture='assets/textures/map/colormap.png' , rotation_y=60,scale=(7), position=(0,2,GOAL_Z))
+        Entity(model='assets/flag',texture='assets/colormap', rotation_y=60,scale=(7), position=(0,2,GOAL_Z))
         Entity(model='cube', color=color.azure,
                scale=(1,0.3,1), position=(-2,0.2,20), collider='box')
         Entity(model='cube', color=color.red,
@@ -233,28 +235,14 @@ class BridgeRaceLevel(Entity):
         # ================== 🌤️ แสงและเงา ==================
         # แสงอาทิตย์หลัก
         sun = DirectionalLight()
-        sun.look_at(Vec3(1, -1, -0.5))      # ทิศทางแสงเฉียงลง
-        sun.color = color.rgb(255, 245, 220)
-        sun.shadows = True                   # ✅ เปิดการแสดงเงา
-        sun.shadow_map_resolution = (2048, 2048)
-        sun.shadow_bias = 0.0005
-
-        # แสงรอบฉาก (ambient) ให้ส่วนมืดไม่ดำสนิท
-        ambient = AmbientLight()
-        ambient.color = color.rgb(100, 100, 120)
-
-        # ถ้าตัวละครหรือพื้นไม่รับเงา ให้เปิดรับแสงแบบนี้ด้วย
-        for e in scene.entities:
-            if hasattr(e, 'model'):
-                e.model = e.model  # บังคับรีโหลด model เพื่ออัปเดตการรับเงา
+        sun.look_at(Vec3(1, -1, -0.5))      
         
         sky = Sky()
-
     def spawn_block(self):
         col = random.choice([color.azure, color.red])
         x = random.randint(-int(START_SIZE/2)+1, int(START_SIZE/2)-1)
         z = random.randint(-int(START_SIZE/2)+1, int(START_SIZE/2)-1)
-        self.collectables.append(Entity(model='cube', texture='assets/brick.png',color=col, scale=(1,0.5,1), position=(x,BLOCK_Y,z), collider='box'))
+        self.collectables.append(Entity(model='cube',texture='assets/brick', color=col, scale=(1,0.5,1), position=(x,BLOCK_Y,z), collider='box'))
         invoke(self.spawn_block, delay=SPAWN_INTERVAL)
 
     def try_pickup_blocks(self, r: Runner):
@@ -276,7 +264,7 @@ class BridgeRaceLevel(Entity):
                 pos = Vec3(r.lane_x, y, z)
                 exists = any(abs(e.position.x-pos.x)<0.05 and abs(e.position.z-pos.z)<0.05 for e in bridge_list)
                 if not exists:
-                    piece = Entity(model='cube',texture='assets/brick.png', color=r.color_main.tint(-.15),
+                    piece = Entity(model='cube',texture='assets/brick', color=r.color_main.tint(-.15),
                                    scale=(1,0.3,1), position=pos, collider='box')
                     bridge_list.append(piece)
                     r.consume_block(1)
@@ -334,8 +322,10 @@ def start_cutscene():
                 scale=(22),                   
                 z=10,                               
                 color=color.white  )
-    red_block = Entity(model='assets/models/player/red.obj',texture='textures/player/colormap.png',color=color.red, scale=(3.5), position=(-4,-1.5,2), rotation_y=-225)
-    blue_block = Entity(model='assets/models/player/blue.obj',texture='textures/player/colormap.png', color=color.azure, scale=(3.5), position=(4,-1.5,2), rotation_y=225)
+    red_block = Entity(model='assets/red.obj',texture='assets/colormap.png',
+                       color=color.red, scale=(3.5), position=(-4,-1.5,2), rotation_y=-225)
+    blue_block = Entity(model='assets/blue.obj',texture='assets/colormap.png', color=color.azure, 
+                        scale=(3.5), position=(4,-1.5,2), rotation_y=225)
     start_button = Button(model='quad',texture= 'assets/start' ,scale=(0.35), color=color.white, y=-0.1)
     logo = Entity(model='quad',        
                 texture='assets/logo.png',
